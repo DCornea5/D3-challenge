@@ -29,6 +29,22 @@ var chartGroup = svg.append("g")
 var chosenXAxis = "poverty",
     chosenYAxis = "healthcare";
 
+
+// Retrieve data from the CSV file and execute everything below
+d3.csv("./assets/data/data.csv").then(function(data, err) {
+  if (err) throw err;
+
+  // parse data
+  data.forEach(function(data) {
+    data.poverty = +data.poverty;
+    data.age = +data.age;
+    data.income = +data.income;
+    data.healthcare = +data.healthcare;
+    data.obesity = +data.obesity;
+    data.smokes = +data.smokes;
+    });
+
+
 // function used for updating x-scale var upon click on axis label
 function xScale(data, chosenXAxis) {
   // create scales
@@ -72,15 +88,20 @@ function updateToolTip(chosenXAxis, stateCircles, stateText) {
   if (chosenXAxis === "poverty") {
     label = "Poverty (%)";
   }
-  else {
+
+  else if (chosenXAxis === "age"){
     label = "Age Median";
+  }
+  else {
+    label = "Income";
   }
 
   var toolTip = d3.tip()
     .attr("class", "d3-tip")
     .offset([80, -60])
     .html(function(d) {
-      return (`${d.state}<br>${label} ${d[chosenXAxis]}`);
+      // return (`${d.state}<br>${label} ${d[chosenXAxis]}`);
+      return (`${d.state}<br>${chosenXAxis} ${d[chosenXAxis]}<br>${chosenYAxis} ${d[chosenYAxis]}`);
     });
 
   stateCircles.call(toolTip);
@@ -96,19 +117,7 @@ function updateToolTip(chosenXAxis, stateCircles, stateText) {
   return stateCircles, stateText;
 }
 
-// Retrieve data from the CSV file and execute everything below
-d3.csv("./assets/data/data.csv").then(function(data, err) {
-  if (err) throw err;
 
-  // parse data
-  data.forEach(function(data) {
-    data.poverty = +data.poverty;
-    data.age = +data.age;
-    data.income = +data.income;
-    data.healthcare = +data.healthcare;
-    data.obesity = +data.obesity;
-    data.smokes = +data.smokes;
-    });
 
   // xLinearScale function above csv import
   var xLinearScale = xScale(data, chosenXAxis);
@@ -137,6 +146,7 @@ d3.csv("./assets/data/data.csv").then(function(data, err) {
     .data(data)
     .enter()
     .append("circle")
+    .classed('stateCircle',true)
     .attr("cx", d => xLinearScale(d[chosenXAxis]))
     .attr("cy", d => yLinearScale(d[chosenYAxis]))
     .attr("r", 20)
