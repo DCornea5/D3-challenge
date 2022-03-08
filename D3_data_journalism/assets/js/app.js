@@ -25,15 +25,9 @@ var svg = d3
 var chartGroup = svg.append("g")
   .attr("transform", `translate(${margin.left}, ${margin.top})`);
 
-// Initial Params
-var chosenXAxis = "poverty",
-    chosenYAxis = "healthcare";
-
-
 // Retrieve data from the CSV file and execute everything below
-d3.csv("./assets/data/data.csv").then(function(data, err) {
-  if (err) throw err;
-
+d3.csv("./assets/data/data.csv").then(function(data) {
+  
   // parse data
   data.forEach(function(data) {
     data.poverty = +data.poverty;
@@ -43,7 +37,6 @@ d3.csv("./assets/data/data.csv").then(function(data, err) {
     data.obesity = +data.obesity;
     data.smokes = +data.smokes;
     });
-
 
 // function used for updating x-scale var upon click on axis label
 function xScale(data, chosenXAxis) {
@@ -58,9 +51,30 @@ function xScale(data, chosenXAxis) {
 
 }
 
+// Create y scale function
+var yLinearScale = d3.scaleLinear()
+.domain([0, d3.max(data, d => d.healthcare)])
+.range([height, 0]);
+
+
+// // function used for updating y-scale var upon click on axis label
+// function yLinearScale(data, chosenYAxis) {
+//   // create scales
+//   var yLinearScale = d3.scaleLinear()
+//     .domain([0,d3.max(data, d => d[chosenYAxis]) * 1.2,
+      
+//     ])
+//     .range([height,0]);
+
+//   return yLinearScale;
+
+// }
+
+
+
 // function used for updating xAxis var upon click on axis label
-function renderAxes(newXScale, xAxis) {
-  var bottomAxis = d3.axisBottom(newXScale);
+function renderAxes(xLinearScale, xAxis) {
+  var bottomAxis = d3.axisBottom(xLinearScale);
 
   xAxis.transition()
     .duration(1000)
@@ -68,6 +82,35 @@ function renderAxes(newXScale, xAxis) {
 
   return xAxis;
 }
+
+
+// Initial Params
+var chosenXAxis = "poverty",
+    chosenYAxis = "healthcare";
+
+
+
+
+  // xLinearScale function above csv import
+  var xLinearScale = xScale(data, chosenXAxis);
+  
+  
+
+  // Create initial axis functions
+  var bottomAxis = d3.axisBottom(xLinearScale);
+  var leftAxis = d3.axisLeft(yLinearScale);
+
+  // append x axis
+  var xAxis = chartGroup.append("g")
+    .classed("x-axis", true)
+    .attr("transform", `translate(0, ${height})`)
+    .call(bottomAxis);
+
+  // append y axis
+  chartGroup.append("g")
+    .call(leftAxis);
+
+
 
 // function used for updating circles group with a transition to
 // new circles
@@ -118,31 +161,10 @@ function updateToolTip(chosenXAxis, stateCircles, stateText) {
 }
 
 
-
-  // xLinearScale function above csv import
-  var xLinearScale = xScale(data, chosenXAxis);
-
-  // Create y scale function
-  var yLinearScale = d3.scaleLinear()
-    .domain([0, d3.max(data, d => d.healthcare)])
-    .range([height, 0]);
-
-  // Create initial axis functions
-  var bottomAxis = d3.axisBottom(xLinearScale);
-  var leftAxis = d3.axisLeft(yLinearScale);
-
-  // append x axis
-  var xAxis = chartGroup.append("g")
-    .classed("x-axis", true)
-    .attr("transform", `translate(0, ${height})`)
-    .call(bottomAxis);
-
-  // append y axis
-  chartGroup.append("g")
-    .call(leftAxis);
-
   // append initial circles
-  var stateCircles = chartGroup.selectAll("circle")
+  
+  var stateCircles = chartGroup.append("g")
+    .selectAll("circle")
     .data(data)
     .enter()
     .append("circle")
@@ -150,20 +172,29 @@ function updateToolTip(chosenXAxis, stateCircles, stateText) {
     .attr("cx", d => xLinearScale(d[chosenXAxis]))
     .attr("cy", d => yLinearScale(d[chosenYAxis]))
     .attr("r", 20)
-    .attr("fill", "pink")
-    .attr("opacity", ".5");
+    
+    .attr("opacity", ".8");
 
   // append circles text
-  var stateText = chartGroup.selectAll("text")
+  var stateText = chartGroup.selectAll("null")
   .data(data)
   .enter()
   .append("text")
+  .classed('stateText',true)
+
+  stateText
+  .attr("x", function(d) {
+    return xLinearScale(d[chosenXAxis]);
+  })
+  .attr("y", function(d) {
+    return yLinearScale(d[chosenYAxis]);
+  })
+  .text(function(d) {
+    return d.abbr;
+  })
   
-  .attr("cx", d => xLinearScale(d[chosenXAxis]))
-  .attr("cy", d => yLinearScale(d[chosenYAxis]))
-  .attr("transform", "translate(0,4.5)")
-  .text(d => d.abbr)
   
+ 
 
 
   // Create group for x-axis labels
@@ -206,7 +237,7 @@ function updateToolTip(chosenXAxis, stateCircles, stateText) {
     .attr("y", 0 - margin.left)
     .attr("x", 0 - (height / 2))
     .attr("dy", "1em")
-    .classed("axis-text", true)
+    .classed("a-text", true)
     .text("Lacks Healthcare (%)");
 
   // updateToolTip function above csv import
@@ -233,7 +264,7 @@ function updateToolTip(chosenXAxis, stateCircles, stateText) {
         xAxis = renderAxes(xLinearScale, xAxis);
 
         // updates circles with new x values
-        stateCircles = renderCircles(stateCircles, xLinearScale, chosenXAxis);
+        stateCircles = renderCircles(chosenXAxis, stateCircles);
 
         // updates tooltips with new info
         stateCircles = updateToolTip(chosenXAxis, stateCircles);
@@ -280,6 +311,5 @@ function updateToolTip(chosenXAxis, stateCircles, stateText) {
       }
       }
     });
-}).catch(function(error) {
-  console.log(error);
+
 });
