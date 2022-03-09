@@ -46,10 +46,13 @@
   line-height: 1;
   line-height: 1.5em;
   color: #fff;
+  /* color: #fff; */
   text-align: center;
   text-transform: capitalize;
-  background: rgba(0, 0, 0, 0.8);
-  border-radius: 4px;
+  /* background: rgba(0, 0, 0, 0.8); */
+  background: rgba(13, 63, 3, 0.8);
+  
+  
 }
 
 /* Mobile Rules */
